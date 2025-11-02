@@ -1,40 +1,31 @@
 package com.whatsapp.restoredelmsg;
 
-import static com.whatsapp.restoredelmsg.monitor.WhatsAppMonitorService.CHANNEL_ID;
-
 import android.Manifest;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.service.notification.StatusBarNotification;
 import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.whatsapp.restoredelmsg.data.AppDatabase;
-import com.whatsapp.restoredelmsg.monitor.WhatsAppMonitorService;
+import com.whatsapp.restoredelmsg.data.MessageEntity;
 import com.whatsapp.restoredelmsg.ui.MessageAdapter;
-import com.whatsapp.restoredelmsg.ui.MessageViewModel;
+import com.whatsapp.restoredelmsg.ui.DeletedMessageViewModel;
 
 import org.jspecify.annotations.NonNull;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "restoredelmsg.Main";
-    private MessageViewModel viewModel;
+    private DeletedMessageViewModel viewModel;
 //    private static AppDatabase notifiedMsgDBInstance;
     private MessageAdapter adapter = null;
 
@@ -51,8 +42,10 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         Button openSettingsButton = findViewById(R.id.openSettingsButton);
 
+        Button clearNotifyMessageFromDBButton = findViewById(R.id.clearNotifyMessageFromDBButton);
+
         adapter = new MessageAdapter();
-        viewModel = new ViewModelProvider(this).get(MessageViewModel.class);
+        viewModel = new ViewModelProvider(this).get(DeletedMessageViewModel.class);
         viewModel.getAllMessages().observe(this, adapter::setMessages);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -70,11 +63,13 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
         }
 
-//        Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-//        startActivity(intent);
+        askNotificationPermission();
 
-//        askNotificationPermission();
-
+        clearNotifyMessageFromDBButton.setOnClickListener(v -> {
+            for (MessageEntity m: DAO_UNHANDLED.getAllMessagesList()) {
+                DAO_UNHANDLED.delete(m);
+            }
+        });
 //        Intent serviceIntent = new Intent(this, WhatsAppMonitorService.class);
 //        ContextCompat.startForegroundService(this, serviceIntent);
 
@@ -99,17 +94,17 @@ public class MainActivity extends AppCompatActivity {
 //
     }
 
-    public boolean isNotificationActive(Context context, int notificationId) {
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            for (StatusBarNotification sbn : manager.getActiveNotifications()) {
-                if (sbn.getId() == notificationId) {
-                    return true; // ✅ Found active notification
-                }
-            }
-//        }
-        return false; // ❌ Not active
-    }
+//    public boolean isNotificationActive(Context context, int notificationId) {
+//        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+////        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+//            for (StatusBarNotification sbn : manager.getActiveNotifications()) {
+//                if (sbn.getId() == notificationId) {
+//                    return true; // ✅ Found active notification
+//                }
+//            }
+////        }
+//        return false; // ❌ Not active
+//    }
 
     private boolean isNotificationServiceEnabled() {
         String pkgName = getPackageName();
@@ -117,23 +112,23 @@ public class MainActivity extends AppCompatActivity {
         return flat != null && flat.contains(pkgName);
     }
 
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode,
-//                                           @NonNull String[] permissions,
-//                                           @NonNull int[] grantResults) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//
-//        if (requestCode == 100) {
-//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                // ✅ Permission granted — now you can show notifications
-////                showNotification("Welcome", "Notifications are enabled!");
-//                showUserNotification("Welcome", "Notifications from main activity are enabled!");
-//            } else {
-//                // ❌ Permission denied — handle gracefully
-//                Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 100) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // ✅ Permission granted — now you can show notifications
+//                showNotification("Welcome", "Notifications are enabled!");
+            } else {
+                // ❌ Permission denied — handle gracefully
+                Toast.makeText(this, "Notification permission to allow continuing monitoring denied",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
 //    private void showUserNotification(String title, String text) {
 //        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -196,32 +191,27 @@ public class MainActivity extends AppCompatActivity {
 //        notificationManager.notify(1001, builder.build()); // 1001 = notification ID
 //    }
 
-//    private void askNotificationPermission() {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-//                    != PackageManager.PERMISSION_GRANTED) {
-//
-//                ActivityCompat.requestPermissions(
-//                        this,
-//                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
-//                        100 // request code
-//                );
-//            }
-//        }
-//    }
-//    @Override
-//    protected void onDestroy() {
-//        /* Since deleted messages can be notify while this APP is on,
-//            save the known messages to verify on NEXT enabling
-//         */
-//
-//        AppDatabase allUnhandledMessages = AppDatabase.getDBInstance(this, "UNHANDLED_MSG1");
-//
-////        List<MessageEntity> messages = adapter.getMessages();
-////        for ( int ind = 0; ind < messages.size(); ind++) {
-////            MessageEntity msg = messages.get(ind);
-////            allUnhandledMessages.messageDao().insert(msg);
-////        }
-//        super.onDestroy();
-//    }
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        100 // request code
+                );
+            }
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        /* Since deleted messages can be notify while this APP is on,
+            save the known messages to verify on NEXT enabling
+         */
+        for (MessageEntity m : DAO_UNHANDLED.getAllMessagesList()) {
+            DAO_UNHANDLED.delete(m);
+        }
+        super.onDestroy();
+    }
 }

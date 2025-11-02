@@ -14,15 +14,13 @@ import androidx.lifecycle.LiveData;
 import com.whatsapp.restoredelmsg.data.AppDatabase;
 import com.whatsapp.restoredelmsg.data.MessageEntity;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class MessageViewModel extends AndroidViewModel {
+public class DeletedMessageViewModel extends AndroidViewModel {
 
     private final LiveData<List<MessageEntity>> allMessages;
 
-    public MessageViewModel(Application application) {
+    public DeletedMessageViewModel(Application application) {
         super(application);
         allMessages = AppDatabase.getDBInstance(application , "DELETED_MSG1").messageDao().getAllMessages();
     }
