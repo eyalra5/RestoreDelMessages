@@ -1,7 +1,5 @@
 package com.whatsapp.restoredelmsg.monitor;
 
-import static androidx.core.content.ContextCompat.getSystemService;
-
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -63,7 +61,7 @@ public abstract class WhatsAppMonitorService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         return START_STICKY; // restart if killed
     }
-//
+
 //    @Override
 //    public IBinder onBind(Intent intent) {
 //        return null; // not a bound service

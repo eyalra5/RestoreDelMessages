@@ -16,6 +16,12 @@
         android:layout_height="wrap_content"
         android:text="Clear notify Messages From Local DB" />
 
+    <Button
+        android:id="@+id/clearDeletedMessageFromDBButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clear view Messages" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
