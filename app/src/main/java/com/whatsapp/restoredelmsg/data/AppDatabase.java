@@ -24,12 +24,10 @@ public abstract class AppDatabase extends RoomDatabase {
     public static AppDatabase getDBInstance(Context context, String dbName) {
         if (databaseByType.get(dbName) == null) {
             synchronized (AppDatabase.class) {
-//                if (databaseByType.get(dbName) == null) {
                     databaseByType.put(dbName, Room.databaseBuilder(
                             context.getApplicationContext(),
                             AppDatabase.class, dbName + "_db"
                     ).build());
-//                }
             }
         }
         return databaseByType.get(dbName);
