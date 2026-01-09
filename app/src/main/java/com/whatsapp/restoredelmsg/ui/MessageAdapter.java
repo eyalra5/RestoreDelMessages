@@ -14,7 +14,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-//public class MessageAdapter{
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
 
     private static final String TAG = "MessageAdapter";

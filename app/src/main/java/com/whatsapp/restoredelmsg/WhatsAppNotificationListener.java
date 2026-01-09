@@ -1,75 +1,30 @@
 package com.whatsapp.restoredelmsg;
 
+
 import com.whatsapp.restoredelmsg.data.MessageEntity;
 
 import android.app.Notification;
 import android.database.sqlite.SQLiteConstraintException;
-import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 
 public class WhatsAppNotificationListener extends NotificationListenerService {
     public static final String TAG = "WhatsAppListener";
-    public static int potentialMsgDeletedNum = 0;
+    public static int deleteViewSize = 0;
     private final Map<String, Integer> _sendersBulkNamesMap = new HashMap<>() ;
     private final Map<String, Integer> _numOfMessages = new HashMap<>() ;
     private volatile MessageEntity _cachedMessageEntity = null;
     private int _totalNumOfMessages = 0;
+    private final MessageDBUtils _messageDBUtils = new MessageDBUtils();
 
-    /*
-    allocate memory → defaults
-   ↓
-superclass ctor
-   ↓
-field initializers run
-   - messageDBUtils = new MessageDBUtils()
-   ↓
-constructor body
-   - print "Inside constructor"
-
-     */
-    private final MessageDBUtils messageDBUtils = new MessageDBUtils();
-    /*
-
-Allocate object memory (defaults)
-   ↓
-Call superclass constructors
-   ↓
-Initialize instance fields (top to bottom)
-   ↓
-Run subclass constructor body
-
-----
-private final MessageDBUtils messageDBUtils;
-    would set default initial: messageDBUtils=0
-AND on ctor:
-    messageDBUtils = new MessageDBUtils();
-actully would be allocate like:
-allocate memory → defaults
-   ↓
-superclass ctor
-   ↓
-(no inline field initializers)
-   ↓
-constructor body
-   - messageDBUtils = new MessageDBUtils()
-   - print "Inside constructor"
-     */
-
-//    @Override
-//    public void onCreate() {
-//        super.onCreate();
-//    }
-
-//    @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
 
         Log.d(TAG, "in onNotificationPosted()");
@@ -115,23 +70,35 @@ constructor body
             return false;
         }
     }
-    private String[] splitIntoWords(String text) {
-//    private String[] splitIntoWords(String text) throws Exception {
-        return text.split("\\s+");
-//        String[] words = text.split("\\s+");
-//        if (words.length < 3) throw new Exception("Bad input. text is: " + text);
-//        return words;
+    private String[] splitIntoWords(String text){
+        String [] words = {text};
+        try {
+            words = text.split("\\s+");
+        } catch (Exception e) {
+            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
+        }
+        return words;
     }
-    private int getNumOfSendersFromText(String[] words) throws Exception {
-        return Integer.parseInt(words[3].
-                replaceAll("[\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]", ""));
+    private int getNumOfSendersFromText(String[] words) {
+        try{
+            return (words.length < 3 ? 0 : Integer.parseInt(words[3].
+                    replaceAll("[\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]", "")));
+        } catch (Exception e) {
+            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
+            return 0;
+        }
     }
-    private int getNumOfMessagesFromText(String[] words) {
-//    private int getNumOfMessagesFromText(String[] words) throws Exception {
-        return Integer.parseInt(words[0].
-                replaceAll("[\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]", ""));
+
+    private int getNumOfMessagesFromText(String[] words){
+        try {
+            return (words.length < 1 ? 0 : Integer.parseInt(words[0].
+                    replaceAll("[\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]", "")));
+        } catch (Exception e) {
+            Log.d(TAG, Objects.requireNonNull(e.getMessage()));
+            return 0;
+        }
     }
-    private void clearPreviousCycleBySender(String sender) {
+    private void clearPreviousCycleBySender() {
         setCachedMessageEntity(null);
     }
 
@@ -140,26 +107,12 @@ constructor body
         return  messageEntity != null;
     }
 
-    private boolean isSuspectAsDeletionAction(String text) {
-        return null == text;
-    }
-
     private synchronized void setCachedMessageEntity(MessageEntity messageEntity) {
         _cachedMessageEntity = messageEntity;
         if (messageEntity == null)  _sendersBulkNamesMap.clear();
     }
     private synchronized MessageEntity getCachedMessageEntity() {
         return _cachedMessageEntity;
-    }
-    
-    private void prepareForDeletionUpdate(String sender, String text) {
-        int numOfSenderMsgs = 0;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            numOfSenderMsgs = getSafeNumOfMessagesBySender(sender);
-        }
-        setSafeNumOfMessagesBySender(sender, numOfSenderMsgs+1);
-        Log.d(TAG,"numOfSenderMsgs:" + numOfSenderMsgs +
-                ", sender:" + sender +  ", text: " + text);
     }
 
     private void insertDBSafe(com.com.whatsapp.restoredelmsg.data.MessageDao dao,
@@ -194,24 +147,19 @@ constructor body
     @Override
     public void onListenerConnected() {
         super.onListenerConnected();
-        Log.i(TAG, "Listener connected ✅");
+        Log.i(TAG, "Listener connected ");
     }
 
     @Override
     public void onListenerDisconnected() {
         super.onListenerDisconnected();
-        Log.w(TAG, "Listener disconnected ⚠️");
+        Log.w(TAG, "Listener disconnected ️");
     }
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
         Log.d(TAG, "in onNotificationRemoved()");
-
         deletionLogicRun(sbn, 0 /*  Case of Notification was the only once, and been remove so not notification left */);
-    }
-
-    private synchronized int getSafeNumOfMessagesBySender(String sender) {
-        return _numOfMessages.getOrDefault(sender, 0);
     }
 
     private synchronized void setSafeNumOfMessagesBySender(String sender, int num) {
@@ -230,18 +178,14 @@ constructor body
         return _totalNumOfMessages;
     }
 
-    public Map<String, Integer> getSendersBulkNamesMap() {
-        return _sendersBulkNamesMap;
-    }
-
-    private void deletionLogicRun(StatusBarNotification sbn, int sendersBulkMinSize) {
+    private void deletionLogicRun(StatusBarNotification sbn, int sendersBulkMinSize){
         if (sbn == null) return;
         String packageName = sbn.getPackageName();
 
         Notification notification = sbn.getNotification();
         if (notification == null) return;
 
-        // Only listen for WhatsApp notifications
+        // Only listen on WhatsApp notifications
         if (!"com.whatsapp".equals(packageName)) {
             return;
         }
@@ -255,61 +199,52 @@ constructor body
         if (null == sender || null == text) return;
 
         if (isValidSeparatorMsg(sender, text) || isValidSeparatorSenderMsg(sender, text)) {
-//            String[] words = null;
-//            int whatsAppNotificationNumOfMessages;
-//            try {
-//            assert text != null;
             String[] words = splitIntoWords(text);
             int whatsAppNotificationNumOfMessages = getNumOfMessagesFromText(words);
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
+            if (whatsAppNotificationNumOfMessages == 0) {
+                return;
+            }
             if (isNotifyMessageDeleted(whatsAppNotificationNumOfMessages, sendersBulkMinSize)) {
                     /*
                     means last notification of batch - sender <count messages>.
                     means use 'numOfMessages' to verify which sender deleted message
                      */
-                Map<String, Integer> sendersBulkNamesMap = new HashMap<>(_sendersBulkNamesMap);//_sendersBulkNamesList;
+                Map<String, Integer> sendersBulkNamesMap = new HashMap<>(_sendersBulkNamesMap);
 
                 Executors.newSingleThreadExecutor().execute(() -> {
-                        /*
-                        Main thread cant access DB to avoid long lock
-                         */
-                    List<MessageEntity> messageEntityList = messageDBUtils.getAllNotifiedCheckedMsgsOfSenderFromDB(_numOfMessages,
-                            sendersBulkNamesMap,
-                            this);
+                        /* As Main thread cant access DB to avoid long lock */
+                    List<MessageEntity> messageEntityList = _messageDBUtils.getAllNotifiedCheckedMsgsOfSenderFromDB(_numOfMessages,
+                                                                                                                    sendersBulkNamesMap);
                     for (MessageEntity messageEntityEle : messageEntityList) {
-                        insertDBSafe(MainActivity.DAO_DEL, messageEntityEle);
-                        deleteEntryDBSafe(MainActivity.DAO_UNHANDLED, messageEntityEle);
+                        insertDBSafe(MessageDBUtils.DAO_DEL, messageEntityEle);
+                        deleteEntryDBSafe(MessageDBUtils.DAO_UNHANDLED, messageEntityEle);
                         decSafeNumOfMessagesBySender(messageEntityEle.sender);
-                        potentialMsgDeletedNum++;
                     }
+                    deleteViewSize = MessageDBUtils.DAO_DEL.getAllMessagesList().size();
                 });
 
                 setCachedMessageEntity(null);
             }
             else if (isOneMessageInCache()) {
                 MessageEntity messageEntity = getCachedMessageEntity();
-                if (messageEntity != null) {
-//            if (messageEntity != null && getTotalNumOfMessages() <= whatsAppNotificationNumOfMessages) {
+                  if (messageEntity != null &&
+                          getTotalNumOfMessages() <= whatsAppNotificationNumOfMessages) {
                     Executors.newSingleThreadExecutor().execute(() -> {
-                        insertDBSafe(MainActivity.DAO_UNHANDLED, messageEntity);
+                        insertDBSafe(MessageDBUtils.DAO_UNHANDLED, messageEntity);
                         setSafeNumOfMessagesBySender(messageEntity.sender,
-                                whatsAppNotificationNumOfMessages);
+                                                     whatsAppNotificationNumOfMessages);
                     });
                     setCachedMessageEntity(null);
                 }
             }
-                /*
-                'Separator' Notification summerier user messages.
-                 */
+            /* 'Separator' Notification summerier user messages. */
         }
         else if ((isValidSeparatorDoubleMsg(sender, text) || isDelSeperator(text)) &&
                 isOneMessageInCache()) {
             MessageEntity messageEntity = getCachedMessageEntity();
             if (messageEntity != null) {
                 Executors.newSingleThreadExecutor().execute(() -> {
-                    insertDBSafe(MainActivity.DAO_UNHANDLED, messageEntity);
+                    insertDBSafe(MessageDBUtils.DAO_UNHANDLED, messageEntity);
 //                    TODO: is it??
                     incSafeNumOfMessagesBySender(messageEntity.sender);
                 });
@@ -320,9 +255,10 @@ constructor body
             setCachedMessageEntity(new MessageEntity(sender, text, System.currentTimeMillis()));
             _sendersBulkNamesMap.putIfAbsent(sender,1);
         } else {
-            clearPreviousCycleBySender("UNKNOW_STATE");
+            clearPreviousCycleBySender();
             Log.d(TAG, "UNHANDLED STATE");
         }
     }
+
 }
 
