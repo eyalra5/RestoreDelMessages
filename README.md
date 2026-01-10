@@ -28,29 +28,11 @@ The app is designed as a first-version experimental solution, favoring high dete
 
 🧠 Algorithm Overview
 -----------
-Intercepts WhatsApp notifications
+Listen on WhatsApp notifications
 
-Stores incoming messages with metadata:
+store notification message, sender and time
 
-Sender
-
-Chat / Group ID
-
-Timestamp
-
-Content
-
-Detects deletion notifications
-
-Matches deletion events against stored messages using:
-
-Temporal proximity
-
-Sender consistency
-
-Chat context
-
-Marks the most probable message as deleted
+Matches deletion events against stored messages
 
 ⚠️ This is a heuristic approach — accuracy is probabilistic, not guaranteed.
 
