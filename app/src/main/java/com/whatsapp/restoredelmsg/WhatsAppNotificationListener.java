@@ -153,14 +153,6 @@ constructor body
     private synchronized MessageEntity getCachedMessageEntity() {
         return _cachedMessageEntity;
     }
-    
-    private void prepareForDeletionUpdate(String sender, String text) {
-        int numOfSenderMsgs = 0;
-        numOfSenderMsgs = getSafeNumOfMessagesBySender(sender);
-        setSafeNumOfMessagesBySender(sender, numOfSenderMsgs+1);
-        Log.d(TAG,"numOfSenderMsgs:" + numOfSenderMsgs +
-                ", sender:" + sender +  ", text: " + text);
-    }
 
     private void insertDBSafe(com.com.whatsapp.restoredelmsg.data.MessageDao dao,
                               MessageEntity messageEntity) {
@@ -207,10 +199,6 @@ constructor body
     public void onNotificationRemoved(StatusBarNotification sbn) {
         Log.d(TAG, "in onNotificationRemoved()");
         deletionLogicRun(sbn, 0 /*  Case of Notification was the only once, and been remove so not notification left */);
-    }
-
-    private synchronized int getSafeNumOfMessagesBySender(String sender) {
-        return _numOfMessages.getOrDefault(sender, 0);
     }
 
     private synchronized void setSafeNumOfMessagesBySender(String sender, int num) {

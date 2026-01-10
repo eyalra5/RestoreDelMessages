@@ -57,6 +57,13 @@ Marks the most probable message as deleted
 It uses public Android APIs only and operates strictly within Android’s permission system.
 Use responsibly and in compliance with local laws and platform policies.
 
+⚠️ Disclaimer
+---
+The APP heuristic require deletion notification as new message income.
+Not all whatsApp deletion do it. To simplified the logic, all income messages been store.
+That way the user may have false positive deletion messages, but wouldn't miss true one.
+The user get UI to clear store message to avoid irrelevant memory allocation. 
+
 ⚠️ Known Limitations
 -----------
 Heuristic-based (may produce false positives)
@@ -83,6 +90,7 @@ Encrypted local storage
 
 UI for browsing deleted messages
 
+
 🔐 Permissions
 ----
 The app requires the following permission:
@@ -100,8 +108,8 @@ No private APIs used
 1. Clone the Repository
 git clone https://github.com/eyalra5/RestoreDelMessages.git
 2. Build the project
-  3. Install using ADB or
-  4. Install as APK and install by ADB
+3. Install using ADB or
+4. Build APK, copy using BlueTooth and install (required manual confirmation)
 
 
 APP icon

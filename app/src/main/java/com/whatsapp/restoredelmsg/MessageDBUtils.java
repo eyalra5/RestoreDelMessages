@@ -9,7 +9,6 @@ import com.whatsapp.restoredelmsg.data.MessageEntity;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -52,16 +51,6 @@ public class MessageDBUtils {
                 }
         }
         return messageEntityList;
-    }
-
-    private boolean isGroupSender(String sender) {
-        String[] words = sender.split("\\s+");
-        return Arrays.asList(words).contains(":");
-    }
-
-    private String extractSenderOfSenderGroup(String sender) {
-        String[] words = sender.split("\\s+");
-        return words.length> 0 ? words[0] : "";
     }
 
     private boolean isDeletionDurationPassed(MessageEntity messageEntity) {
